@@ -1,4 +1,5 @@
 import Attendance from "../models/Attendance.js";
+import User from "../models/User.js";
 import Dispute from "../models/Dispute.js";
 
 export const approveAttendance = async (req,res)=>{
@@ -7,7 +8,7 @@ export const approveAttendance = async (req,res)=>{
       if(!phone || !hoursWorked){
         return res.status(400).json({message: "Phone and hoursWorked are required"});
       }
-      const worker = await User.findOne({phone,role:"employer"});
+      const worker = await User.findOne({phone,role:"worker"});
       if(!worker){
         return res.status(404).json({message: "worker not found"});
       }
@@ -22,6 +23,7 @@ export const approveAttendance = async (req,res)=>{
     }
     catch(err){
         res.status(500).json({message: "Server Error"});
+        console.error(err);
     }
 
 }

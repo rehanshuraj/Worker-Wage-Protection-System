@@ -8,7 +8,7 @@ export default function WorkerDashboard() {
   const markAttendance = async () => {
     try {
       await API.post("/worker/attendance", {
-        employerPhone,
+        phone: employerPhone,
         hoursWorked: Number(hours)
       });
 
