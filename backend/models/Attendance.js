@@ -1,21 +1,16 @@
 import mongoose from "mongoose";
 
 const attendanceSchema = new mongoose.Schema({
-    worker:{
-        type: mongoose.Schema.Types.objectId,
-        ref: "User",
+    phone:{
+        type: String,
         required: true
     },
-    employer: {
-        type: mongoose.Schema.Types.objectId,
-        ref: "User",
-    },
     date: String,
-    hoursWorked:Number,
-    approved:{
+    hoursWorked: Number,
+    approved: {
         type: Boolean,
         default: false
     }
-}, {timestamps: true});
+}, { timestamps: true });
 
 export default mongoose.model("Attendance", attendanceSchema);
