@@ -4,9 +4,9 @@ import Dispute from "../models/Dispute.js";
 
 export const approveAttendance = async (req,res)=>{
     try{
-      const {phone, hoursWorked} = req.body;
-      if(!phone || !hoursWorked){
-        return res.status(400).json({message: "Phone and hoursWorked are required"});
+      const {workerPhone, totalHours,employerName,employerPhone,ratePerHour} = req.body;
+      if(!workerPhone || !totalHours || !employerName || !employerPhone || !ratePerHour){
+        return res.status(400).json({message: "All fields are required"});
       }
       const worker = await User.findOne({phone,role:"worker"});
       if(!worker){
@@ -17,7 +17,7 @@ export const approveAttendance = async (req,res)=>{
         phone,
         hoursWorked,
         date: new Date().toISOString().split('T')[0],
-        approved: true
+        approved: false
       })
       res.json({ message: "Attendence approved successfully", attendance } );
     }

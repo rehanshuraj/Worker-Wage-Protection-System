@@ -2,37 +2,60 @@ import { useState } from "react";
 import API from "../api/api";
 
 export default function Login() {
-  const [phone, setPhone] = useState("");
-  const [role, setRole] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [role, setRole] = useState("worker"); // ✅ default
 
   const handleLogin = async () => {
-    const res = await API.post("/auth/login", { phone, role, name });
-    localStorage.setItem("token", res.data.token);
+    try {
+      if (!phone || !role) {
+        alert("Phone and role are required");
+        return;
+      }
 
-    if (role === "worker") window.location.href = "/worker";
-    else window.location.href = "/employer";
+      console.log("SENDING:", { name, phone, role }); // 🔥 DEBUG
+
+      const res = await API.post("/auth/login", {
+        name,
+        phone,
+        role, // must be lowercase
+      });
+
+      localStorage.setItem("token", res.data.token);
+
+      if (role === "worker") {
+        window.location.href = "/worker";
+      } else {
+        window.location.href = "/employer";
+      }
+    } catch (err) {
+      console.error("LOGIN ERROR:", err.response?.data);
+      alert(err.response?.data?.message || "Login failed");
+    }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-6 rounded w-80 shadow">
-        <h2 className="text-xl font-bold mb-4">Login</h2>
+    <div className="h-screen flex items-center justify-center">
+      <div className="border p-6 w-80">
+        <h1 className="text-xl font-bold mb-4">Login</h1>
 
         <input
           placeholder="Name"
           className="border p-2 w-full mb-2"
+          value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
         <input
           placeholder="Phone"
           className="border p-2 w-full mb-2"
+          value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
 
         <select
           className="border p-2 w-full mb-4"
+          value={role}
           onChange={(e) => setRole(e.target.value)}
         >
           <option value="worker">Worker</option>

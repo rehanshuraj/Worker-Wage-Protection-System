@@ -1,56 +1,129 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import API from "../../api/api";
 
-export default function WorkerDashboard() {
-  const [hours, setHours] = useState(8);
+export default function EmployerDashboard() {
   const [employerPhone, setEmployerPhone] = useState("");
+  const [workers, setWorkers] = useState([]);
+  const [selectedWorker, setSelectedWorker] = useState(null);
+  const [workerDetail, setWorkerDetail] = useState(null);
 
-  const markAttendance = async () => {
-    try {
-      await API.post("/employer/attendance", {
-        phone: employerPhone, 
-        hoursWorked: Number(hours)
-      });
+  // Fetch workers under employer
+  const fetchWorkers = async () => {
+    if (!employerPhone) return;
 
-      alert("Attendance marked successfully");
-      setEmployerPhone("");
-      setHours(8);
+    const res = await API.get(`/employer/workers/${employerPhone}`);
+    setWorkers(res.data);
+  };
 
-    } catch (error) {
-      alert(error.response?.data?.message || "Error marking attendance");
-      console.error(error);
-    }
+  // Fetch single worker detail
+  const fetchWorkerDetail = async (workerPhone) => {
+    const res = await API.get(
+      `/employer/worker/${employerPhone}/${workerPhone}`
+    );
+    setSelectedWorker(workerPhone);
+    setWorkerDetail(res.data);
+  };
+
+  // Approve today attendance
+  const approveAttendance = async (attendanceId) => {
+    await API.post("/employer/approve", {
+      attendanceId,
+      employerPhone,
+    });
+
+    alert("Attendance approved");
+    fetchWorkerDetail(selectedWorker);
   };
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Employer Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-4">Employer Dashboard</h1>
 
-      {/* Employer Phone */}
+      {/* Employer phone input */}
       <input
-        type="tel"
-        placeholder="Employer Phone Number"
-        className="border p-2 mb-2 block w-64"
+        placeholder="Your Phone Number"
+        className="border p-2 mb-4"
         value={employerPhone}
         onChange={(e) => setEmployerPhone(e.target.value)}
+        onBlur={fetchWorkers}
       />
 
-      {/* Hours Worked */}
-      <input
-        type="number"
-        min="1"
-        max="24"
-        value={hours}
-        className="border p-2 mb-2 w-20"
-        onChange={(e) => setHours(e.target.value)}
-      />
+      <div className="flex gap-6">
+        {/* LEFT PANEL – Workers List */}
+        <div className="w-1/3 border p-4 rounded">
+          <h2 className="font-semibold mb-2">Your Worker Details</h2>
 
-      <button
-        onClick={markAttendance}
-        className="bg-green-600 text-white px-4 py-2"
-      >
-        Mark Attendance
-      </button>
+          {workers.map((worker) => (
+            <div
+              key={worker.workerPhone}
+              onClick={() => fetchWorkerDetail(worker.workerPhone)}
+              className={`p-2 mb-2 border cursor-pointer ${
+                selectedWorker === worker.workerPhone
+                  ? "bg-gray-200"
+                  : ""
+              }`}
+            >
+              Worker {worker.workerPhone}
+            </div>
+          ))}
+        </div>
+
+        {/* RIGHT PANEL – Worker Detail */}
+        <div className="w-2/3 border p-4 rounded">
+          {!workerDetail ? (
+            <p>Select a worker to view details</p>
+          ) : (
+            <>
+              <h2 className="font-semibold mb-2">
+                Worker: {workerDetail.workerPhone}
+              </h2>
+
+              {/* Today attendance */}
+              <div className="mb-4">
+                <p>
+                  <strong>Today Attendance:</strong>{" "}
+                  {workerDetail.todayAttendance?.approved
+                    ? "Approved"
+                    : "Pending"}
+                </p>
+
+                {!workerDetail.todayAttendance?.approved && (
+                  <button
+                    onClick={() =>
+                      approveAttendance(
+                        workerDetail.todayAttendance._id
+                      )
+                    }
+                    className="bg-green-600 text-white px-3 py-1 mt-2"
+                  >
+                    Approve
+                  </button>
+                )}
+              </div>
+
+              {/* Total wage */}
+              <p>
+                <strong>Total Wage:</strong> ₹
+                {workerDetail.totalWage}
+              </p>
+
+              {/* Disputes */}
+              <div className="mt-4">
+                <strong>Disputes:</strong>
+                {workerDetail.disputes.length === 0 ? (
+                  <p>No disputes</p>
+                ) : (
+                  workerDetail.disputes.map((d) => (
+                    <p key={d._id} className="text-red-600">
+                      {d.reason}
+                    </p>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
