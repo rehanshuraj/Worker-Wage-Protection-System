@@ -1,74 +1,72 @@
 import { useState } from "react";
 import API from "../api/api";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Login() {
-  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState("worker"); // ✅ default
+  const [password, setPassword] = useState("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
-      if (!phone || !role) {
-        alert("Phone and role are required");
-        return;
-      }
-
-      console.log("SENDING:", { name, phone, role }); // 🔥 DEBUG
-
-      const res = await API.post("/auth/login", {
-        name,
+      const res = await API.post("/api/auth/login", {
         phone,
-        role, // must be lowercase
+        password
       });
 
-      localStorage.setItem("token", res.data.token);
+      login(res.data);
 
-      if (role === "worker") {
-        window.location.href = "/worker";
-      } else {
-        window.location.href = "/employer";
-      }
+      if (res.data.user.role === "worker")
+        navigate("/worker");
+      else
+        navigate("/employer");
+
     } catch (err) {
-      console.error("LOGIN ERROR:", err.response?.data);
       alert(err.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="border p-6 w-80">
-        <h1 className="text-xl font-bold mb-4">Login</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-700">
+      
+      <div className="bg-white p-8 rounded-2xl shadow-2xl w-96">
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
+          Welcome Back 👋
+        </h2>
 
-        <input
-          placeholder="Name"
-          className="border p-2 w-full mb-2"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Phone Number"
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setPhone(e.target.value)}
+          />
 
-        <input
-          placeholder="Phone"
-          className="border p-2 w-full mb-2"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        <select
-          className="border p-2 w-full mb-4"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="worker">Worker</option>
-          <option value="employer">Employer</option>
-        </select>
+          <button
+            onClick={handleLogin}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition duration-300"
+          >
+            Login
+          </button>
+        </div>
 
-        <button
-          onClick={handleLogin}
-          className="bg-black text-white w-full py-2"
-        >
-          Login
-        </button>
+        <p className="text-center text-gray-600 mt-6">
+          Don’t have an account?{" "}
+          <Link to="/register" className="text-blue-600 font-semibold hover:underline">
+            Register
+          </Link>
+        </p>
       </div>
+
     </div>
   );
 }
